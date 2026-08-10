@@ -47,3 +47,6 @@ coverage/
 *.key
 *.mobileprovision
 *.orig.*
+
+.vercel
+.env*
