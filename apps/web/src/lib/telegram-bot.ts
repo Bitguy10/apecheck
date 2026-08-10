@@ -55,11 +55,19 @@ export async function handleTelegramUpdate(update: TgUpdate): Promise<void> {
   const { cmd, arg } = parseCommand(text);
 
   try {
+    // Bare token address (no slash command) → scan it. Pasting a contract
+    // address is the most natural way to use the bot, so treat it as /scan.
+    // Also catches a valid address embedded in a short message ("scan 8Bq…pump").
+    if (cmd === '') {
+      const bareAddress = findAddressInText(text);
+      if (bareAddress) return await onScanCommand(chatIdStr, 'scan', bareAddress);
+      return await onHelp(chatIdStr);
+    }
+
     switch (cmd) {
       case 'start':
         return await onStart(chatIdStr, arg, username);
       case 'help':
-      case '':
         return await onHelp(chatIdStr);
       case 'scan':
       case 'risk':
@@ -96,6 +104,14 @@ function parseCommand(text: string): { cmd: string; arg: string } {
   const [head, ...rest] = text.slice(1).split(/\s+/);
   const cmd = head.split('@')[0].toLowerCase(); // strip /cmd@botname in groups
   return { cmd, arg: rest.join(' ').trim() };
+}
+
+/** First valid Solana address appearing as a whitespace-delimited word, or null. */
+function findAddressInText(text: string): string | null {
+  for (const word of text.split(/\s+/)) {
+    if (isValidSolanaAddress(word)) return normalizeAddress(word);
+  }
+  return null;
 }
 
 /** user_id bound to this chat (linked), or null. */
@@ -139,11 +155,13 @@ async function scanToken(address: string): Promise<ScanResult> {
 // ── /start + /help ───────────────────────────────────────────
 async function onStart(chatId: string, code: string, username: string | null): Promise<void> {
   if (!code) {
+    const url = env.appUrl().replace(/\/$/, '');
+    const shown = url.replace(/^https?:\/\//, '');
     await sendTelegramMessage(
       chatId,
       'Welcome to <b>ApeCheck</b> 🦍\n\n' +
-        'Send a token address or use <code>/scan &lt;address&gt;</code> to get a full rug-risk report.\n\n' +
-        'To get <b>alerts</b> when a watched token rugs, open the app → Alerts → “Connect Telegram”, or use <code>/help</code>.',
+        'Paste any Solana token address (or use <code>/scan &lt;address&gt;</code>) and I’ll return a full rug-risk report — <b>no account needed</b>.\n\n' +
+        `For <b>alerts</b> when a watched token rugs, connect your account at <a href="${url}/alerts">${shown}/alerts</a> → “Connect Telegram”. Send /help for all commands.`,
     );
     return;
   }
@@ -151,15 +169,17 @@ async function onStart(chatId: string, code: string, username: string | null): P
 }
 
 async function onHelp(chatId: string): Promise<void> {
+  const url = env.appUrl().replace(/\/$/, '');
+  const shown = url.replace(/^https?:\/\//, '');
   await sendTelegramMessage(
     chatId,
     '🦍 <b>ApeCheck bot</b>\n\n' +
-      '<b>Scan a token</b> (paste any Solana address after the command):\n' +
+      '<b>Scan a token</b> — just paste its Solana address, or add it after a command (<b>no account needed</b>):\n' +
       '/scan · /risk · /market · /liquidity · /authorities · /dev · /holders · /honeypot\n' +
       '/chart · /trades · /bubblemap — live links\n\n' +
       '<b>Alerts</b> (connect your account first):\n' +
       '/watch &lt;address&gt; · /unwatch &lt;address&gt; · /watchlist · /alerts\n\n' +
-      'Connect your account in the app → Alerts → “Connect Telegram”, then you’ll get a /start link.\n\n' +
+      `To get alerts, connect at <a href="${url}/alerts">${shown}/alerts</a> → “Connect Telegram” — you’ll get a one-tap link back here.\n\n` +
       RISK_DISCLAIMER,
   );
 }
@@ -171,7 +191,7 @@ async function onScanCommand(chatId: string, cmd: string, arg: string): Promise<
   if (!address) {
     await sendTelegramMessage(
       chatId,
-      `Send a token address, e.g. <code>/${cmd} So11111111111111111111111111111111111111112</code>`,
+      `Send me the token’s contract address and I’ll run <b>/${cmd}</b> on it — just paste the address here, or use <code>/${cmd} &lt;address&gt;</code>.`,
     );
     return;
   }
@@ -251,12 +271,21 @@ function scanErrorText(err: unknown): string {
 }
 
 // ── watchlist-scoped commands (require a linked account) ─────
-const CONNECT_HINT =
-  '🔗 Connect your ApeCheck account first: open the app → <b>Alerts</b> → “Connect Telegram”, tap the link, then try again.';
+function connectHint(): string {
+  const url = env.appUrl().replace(/\/$/, '');
+  const shown = url.replace(/^https?:\/\//, '');
+  return (
+    '🔗 <b>Alerts need a connected account.</b>\n\n' +
+    `1. Open <a href="${url}/alerts">${shown}/alerts</a> and sign in (free).\n` +
+    '2. Tap <b>“Connect Telegram”</b> — it opens a one-tap link back here.\n' +
+    '3. Come back and try again.\n\n' +
+    'Scanning tokens needs no account — just paste an address anytime.'
+  );
+}
 
 async function onWatch(chatId: string, arg: string): Promise<void> {
   const userId = await getLinkedUserId(chatId);
-  if (!userId) return void (await sendTelegramMessage(chatId, CONNECT_HINT));
+  if (!userId) return void (await sendTelegramMessage(chatId, connectHint()));
 
   const address = await resolveAddress(arg, userId);
   if (!address) {
@@ -293,7 +322,7 @@ async function onWatch(chatId: string, arg: string): Promise<void> {
 
 async function onUnwatch(chatId: string, arg: string): Promise<void> {
   const userId = await getLinkedUserId(chatId);
-  if (!userId) return void (await sendTelegramMessage(chatId, CONNECT_HINT));
+  if (!userId) return void (await sendTelegramMessage(chatId, connectHint()));
 
   const address = arg && isValidSolanaAddress(arg) ? normalizeAddress(arg) : null;
   if (!address) {
@@ -319,7 +348,7 @@ async function onUnwatch(chatId: string, arg: string): Promise<void> {
 
 async function onWatchlist(chatId: string): Promise<void> {
   const userId = await getLinkedUserId(chatId);
-  if (!userId) return void (await sendTelegramMessage(chatId, CONNECT_HINT));
+  if (!userId) return void (await sendTelegramMessage(chatId, connectHint()));
 
   const admin = getAdminSupabase();
   const { data: rows } = await admin
@@ -352,7 +381,7 @@ async function onWatchlist(chatId: string): Promise<void> {
 
 async function onAlerts(chatId: string): Promise<void> {
   const userId = await getLinkedUserId(chatId);
-  if (!userId) return void (await sendTelegramMessage(chatId, CONNECT_HINT));
+  if (!userId) return void (await sendTelegramMessage(chatId, connectHint()));
 
   const admin = getAdminSupabase();
   const { data: wl } = await admin.from('watchlist').select('id').eq('user_id', userId);

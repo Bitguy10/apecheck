@@ -1,12 +1,12 @@
 import { handleTelegramUpdate, type TgUpdate } from '@/lib/telegram-bot';
 import { env } from '@/lib/env';
+import { waitUntil } from '@vercel/functions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// A cold /scan can take 20-50s. Without this the function inherits Vercel's 10s
-// default and is killed mid-scan → Telegram never gets a 200 → it retries the
-// update → duplicate "Scanning…" replies + apparent hangs. 60s (Hobby max) lets
-// the handler finish and ack within Telegram's webhook tolerance.
+// A cold /scan can take 20-50s. We ACK Telegram instantly (below) and let the
+// handler finish in the background via waitUntil — but the function must stay
+// alive until that work settles, so keep the max duration at the Hobby ceiling.
 export const maxDuration = 60;
 
 /**
@@ -14,8 +14,12 @@ export const maxDuration = 60;
  * Register with POST /api/internal/telegram-setup?key=<CRON_SECRET>.
  *
  * Routes every message through handleTelegramUpdate (scan/info commands +
- * /start deep-link binding + watchlist commands). Always returns 200 so
- * Telegram doesn't retry — except on a bad secret token.
+ * /start deep-link binding + watchlist commands). We return 200 immediately and
+ * run the handler in the background (waitUntil): a scan can take 20-50s, and if
+ * we held the response open that long Telegram would time out, retry the update,
+ * and the user would get duplicate replies. The handler sends its own progress
+ * ("🔍 Scanning…") and result messages, so nothing is lost by acking early.
+ * Only a bad secret token returns non-200.
  */
 export async function POST(req: Request) {
   // Verify the secret Telegram echoes back, when configured.
@@ -31,6 +35,6 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
-  await handleTelegramUpdate(update);
+  waitUntil(handleTelegramUpdate(update));
   return Response.json({ ok: true });
 }
