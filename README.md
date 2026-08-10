@@ -57,7 +57,7 @@ apecheck/
 ├── cron/             Portable dev-wallet dump watcher (GitHub Actions / any Node host)
 ├── supabase/
 │   └── schema.sql    Tables + Row Level Security policies
-└── .github/workflows/dev-wallet-watch.yml
+└── .github/workflows/  check-dumps + telegram-setup schedules
 ```
 
 The shared packages are consumed **raw** (no build step) — the web app transpiles them via `transpilePackages`, and Metro resolves them for mobile. Design tokens live once in `packages/ui` and feed both Tailwind (web) and NativeWind (mobile).
@@ -186,7 +186,7 @@ npm run cron:dumps                 # single pass (ideal for scheduled cron / CI)
 npm run watch --workspace @apecheck/cron   # resident loop (every 15 min)
 ```
 
-A ready-to-use GitHub Actions schedule lives in [`.github/workflows/dev-wallet-watch.yml`](.github/workflows/dev-wallet-watch.yml) — add `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `HELIUS_API_KEY` as repo secrets to enable it.
+Wire it into any scheduler that runs Node — Railway, a Raspberry Pi, or a plain unix crontab — with env `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and one of `SOLANA_RPC_URL` / `HELIUS_API_KEY`. On GitHub-hosted deploys prefer **A** instead: it reuses the keys already in Vercel rather than copying the service-role key into GitHub secrets.
 
 ---
 
