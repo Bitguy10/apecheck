@@ -85,15 +85,15 @@ body::before {
   animation: log-print 0.35s ease-out both;
 }
 
-/* Neon text glow helper */
+/* Neon text glow helper — moderate, keeps text crisp */
 .text-glow-green {
-  text-shadow: 0 0 12px rgba(20, 241, 149, 0.6);
+  text-shadow: 0 0 8px rgba(20, 241, 149, 0.35);
 }
 .text-glow-purple {
-  text-shadow: 0 0 12px rgba(153, 69, 255, 0.6);
+  text-shadow: 0 0 8px rgba(153, 69, 255, 0.35);
 }
 .text-glow-banana {
-  text-shadow: 0 0 12px rgba(245, 213, 71, 0.6);
+  text-shadow: 0 0 8px rgba(245, 213, 71, 0.35);
 }
 
 main,

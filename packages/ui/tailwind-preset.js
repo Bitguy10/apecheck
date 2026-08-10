@@ -33,11 +33,11 @@ module.exports = {
       },
       borderRadius: { sm: '6px', md: '10px', lg: '16px', xl: '22px' },
       boxShadow: {
-        'glow-purple': '0 0 20px rgba(153, 69, 255, 0.45), 0 0 40px rgba(153, 69, 255, 0.2)',
-        'glow-green': '0 0 20px rgba(20, 241, 149, 0.45), 0 0 40px rgba(20, 241, 149, 0.2)',
-        'glow-amber': '0 0 20px rgba(255, 176, 32, 0.45), 0 0 40px rgba(255, 176, 32, 0.2)',
-        'glow-red': '0 0 20px rgba(255, 59, 92, 0.45), 0 0 40px rgba(255, 59, 92, 0.2)',
-        'glow-banana': '0 0 24px rgba(245, 213, 71, 0.5), 0 0 48px rgba(245, 213, 71, 0.22)',
+        'glow-purple': '0 0 12px rgba(153, 69, 255, 0.25), 0 0 24px rgba(153, 69, 255, 0.1)',
+        'glow-green': '0 0 12px rgba(20, 241, 149, 0.25), 0 0 24px rgba(20, 241, 149, 0.1)',
+        'glow-amber': '0 0 12px rgba(255, 176, 32, 0.25), 0 0 24px rgba(255, 176, 32, 0.1)',
+        'glow-red': '0 0 12px rgba(255, 59, 92, 0.25), 0 0 24px rgba(255, 59, 92, 0.1)',
+        'glow-banana': '0 0 14px rgba(245, 213, 71, 0.28), 0 0 28px rgba(245, 213, 71, 0.12)',
       },
       keyframes: {
         'cursor-blink': { '0%, 49%': { opacity: '1' }, '50%, 100%': { opacity: '0' } },

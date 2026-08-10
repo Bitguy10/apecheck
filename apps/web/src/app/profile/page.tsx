@@ -140,6 +140,10 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Track set/unset locally: the `hasPassword` prop is fetched once on load and
+  // won't update after we set a password, so the row would otherwise still read
+  // "not set" right next to the "✓ updated" note. Flip it on a successful save.
+  const [isSet, setIsSet] = useState(hasPassword);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -154,6 +158,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
         setError(err.message);
         return;
       }
+      setIsSet(true);
       setDone(true);
       setEditing(false);
       setPassword('');
@@ -168,7 +173,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
       <Field label="Password">
         {!editing && (
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm text-text-primary">{hasPassword ? '••••••••' : 'not set'}</span>
+            <span className="font-mono text-sm text-text-primary">{isSet ? '••••••••' : 'not set'}</span>
             <button
               onClick={() => {
                 setEditing(true);
@@ -176,7 +181,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
               }}
               className="font-mono text-[11px] text-signal-green transition-colors hover:underline"
             >
-              {hasPassword ? 'Change password' : 'Set password'}
+              {isSet ? 'Change password' : 'Set password'}
             </button>
           </div>
         )}

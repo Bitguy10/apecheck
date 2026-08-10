@@ -23,9 +23,12 @@ export function Nav() {
           </span>
         </Link>
         <nav className="flex items-center gap-0.5 font-mono text-xs sm:gap-1">
-          {TABS.map((t) => (
-            <NavLink key={t.href} href={t.href} label={t.label} active={isActive(pathname, t.href)} />
-          ))}
+          {/* Route links live in the bottom tab bar on mobile — show them up here only at sm+ */}
+          <div className="hidden items-center gap-0.5 sm:flex sm:gap-1">
+            {TABS.map((t) => (
+              <NavLink key={t.href} href={t.href} label={t.label} active={isActive(pathname, t.href)} />
+            ))}
+          </div>
           <AuthButton />
         </nav>
       </div>

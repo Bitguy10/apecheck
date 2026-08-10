@@ -85,13 +85,13 @@ export const radii = {
   full: 9999,
 } as const;
 
-/** Neon glow shadows (web box-shadow strings). */
+/** Neon glow shadows (web box-shadow strings). Moderate — soft accent, not a halo. */
 export const glows = {
-  purple: `0 0 20px rgba(153, 69, 255, 0.45), 0 0 40px rgba(153, 69, 255, 0.2)`,
-  green: `0 0 20px rgba(20, 241, 149, 0.45), 0 0 40px rgba(20, 241, 149, 0.2)`,
-  amber: `0 0 20px rgba(255, 176, 32, 0.45), 0 0 40px rgba(255, 176, 32, 0.2)`,
-  red: `0 0 20px rgba(255, 59, 92, 0.45), 0 0 40px rgba(255, 59, 92, 0.2)`,
-  banana: `0 0 24px rgba(245, 213, 71, 0.5), 0 0 48px rgba(245, 213, 71, 0.22)`,
+  purple: `0 0 12px rgba(153, 69, 255, 0.25), 0 0 24px rgba(153, 69, 255, 0.1)`,
+  green: `0 0 12px rgba(20, 241, 149, 0.25), 0 0 24px rgba(20, 241, 149, 0.1)`,
+  amber: `0 0 12px rgba(255, 176, 32, 0.25), 0 0 24px rgba(255, 176, 32, 0.1)`,
+  red: `0 0 12px rgba(255, 59, 92, 0.25), 0 0 24px rgba(255, 59, 92, 0.1)`,
+  banana: `0 0 14px rgba(245, 213, 71, 0.28), 0 0 28px rgba(245, 213, 71, 0.12)`,
 } as const;
 
 export type ColorToken = keyof typeof colors;

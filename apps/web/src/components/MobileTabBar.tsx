@@ -19,6 +19,9 @@ const TABS = [
 export function MobileTabBar() {
   const pathname = usePathname();
 
+  // No bottom bar on the auth screen — it's a focused sign-in/sign-up flow.
+  if (pathname === '/login') return null;
+
   return (
     <nav
       aria-label="Primary"
