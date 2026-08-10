@@ -1,0 +1,22 @@
+{
+  "name": "@apecheck/cron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone dev-wallet dump watcher (portable alternative to Vercel Cron)",
+  "type": "module",
+  "scripts": {
+    "start": "tsx dev-wallet-watch.ts",
+    "watch": "tsx dev-wallet-watch.ts --watch",
+    "bot": "tsx telegram-poll.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apecheck/api-clients": "*",
+    "@apecheck/core": "*",
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "~5.5.4"
+  }
+}

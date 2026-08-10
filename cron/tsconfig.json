@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": "..",
+    "paths": {
+      "@apecheck/core": ["packages/core/src/index.ts"],
+      "@apecheck/core/*": ["packages/core/src/*"],
+      "@apecheck/api-clients": ["packages/api-clients/src/index.ts"],
+      "@apecheck/api-clients/*": ["packages/api-clients/src/*"]
+    }
+  },
+  "include": ["*.ts"]
+}

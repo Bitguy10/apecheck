@@ -1,0 +1,32 @@
+{
+  "name": "apecheck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ApeCheck — Solana token rug-pull risk scanner for degen traders",
+  "workspaces": [
+    "apps/web",
+    "apps/mobile",
+    "packages/core",
+    "packages/api-clients",
+    "packages/ui",
+    "cron"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @apecheck/web",
+    "dev:mobile": "npm run start --workspace @apecheck/mobile",
+    "build:web": "npm run build --workspace @apecheck/web",
+    "build:packages": "npm run build --workspace @apecheck/ui --workspace @apecheck/core --workspace @apecheck/api-clients",
+    "cron:dumps": "npm run start --workspace @apecheck/cron",
+    "bot:dev": "npm run bot --workspace @apecheck/cron",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "overrides": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "license": "MIT"
+}

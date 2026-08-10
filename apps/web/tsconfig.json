@@ -1,0 +1,47 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "jsx": "preserve",
+    "module": "esnext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@apecheck/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@apecheck/api-clients": [
+        "../../packages/api-clients/src/index.ts"
+      ],
+      "@apecheck/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@apecheck/ui/tokens": [
+        "../../packages/ui/src/tokens.ts"
+      ]
+    },
+    "allowJs": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
