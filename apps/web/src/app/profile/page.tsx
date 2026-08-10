@@ -153,7 +153,14 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 
     setBusy(true);
     try {
-      const { error: err } = await getBrowserSupabase().auth.updateUser({ password });
+      // Stamp has_password in user_metadata alongside the password itself. For an
+      // OAuth (Google) account Supabase may not add a separate "email" identity,
+      // so this flag is what lets the server report hasPassword=true after a
+      // refresh — otherwise the row reverts to "not set" every reload.
+      const { error: err } = await getBrowserSupabase().auth.updateUser({
+        password,
+        data: { has_password: true },
+      });
       if (err) {
         setError(err.message);
         return;

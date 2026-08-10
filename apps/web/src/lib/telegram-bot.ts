@@ -177,9 +177,9 @@ async function onHelp(chatId: string): Promise<void> {
       '<b>Scan a token</b> — just paste its Solana address, or add it after a command (<b>no account needed</b>):\n' +
       '/scan · /risk · /market · /liquidity · /authorities · /dev · /holders · /honeypot\n' +
       '/chart · /trades · /bubblemap — live links\n\n' +
-      '<b>Alerts</b> (connect your account first):\n' +
+      `<b>Alerts</b> (connect your account first): <a href="${url}/">${shown}/</a>\n` +
       '/watch &lt;address&gt; · /unwatch &lt;address&gt; · /watchlist · /alerts\n\n' +
-      `To get alerts, connect at <a href="${url}/alerts">${shown}/alerts</a> → “Connect Telegram” — you’ll get a one-tap link back here.\n\n` +
+      `Connect your account in the app (<a href="${url}/">${shown}/</a>) → Alerts → “Connect Telegram”, then you’ll get a /start link.\n\n` +
       RISK_DISCLAIMER,
   );
 }

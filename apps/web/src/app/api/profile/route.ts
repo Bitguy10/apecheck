@@ -34,7 +34,13 @@ export async function GET() {
   }
 
   const identities = user.identities || [];
-  const hasPassword = identities.some((i) => i.provider === 'email');
+  // A password may exist even when there's no separate "email" identity — e.g. a
+  // Google user who set one from this page. Supabase doesn't always add an email
+  // identity in that case, so we also stamp `has_password` into user_metadata on
+  // save (see profile page) and honor either signal. Otherwise the row would
+  // wrongly revert to "not set" on every refresh.
+  const meta = (user.user_metadata as Record<string, unknown>) || {};
+  const hasPassword = meta.has_password === true || identities.some((i) => i.provider === 'email');
   const emailVerified = !!(user.email_confirmed_at || (user.user_metadata as Record<string, unknown>)?.email_verified);
 
   const profile: Profile = {
