@@ -108,7 +108,7 @@ export function AuthButton() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-panel shadow-glow-purple"
+          className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-border-glow bg-panel-2 shadow-glow-purple"
         >
           <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-solana-purple/20 font-display text-sm font-bold text-solana-purple">

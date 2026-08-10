@@ -177,7 +177,7 @@ npm run dev:mobile     # Expo dev server; scan the QR with Expo Go
 
 A watched token's dev wallet is polled on a schedule; if its balance drops more than `DEV_DUMP_THRESHOLD_PERCENT` (**20%**) from the captured baseline, an alert row is inserted and a push is sent to the user's devices (Expo for mobile, OneSignal for web). There are **two ways** to run it — pick one (or both, for redundancy):
 
-**A) Vercel Cron (canonical).** Already configured in [`apps/web/vercel.json`](apps/web/vercel.json) to hit `/api/internal/check-dumps` every 15 minutes. Set `CRON_SECRET` in your Vercel project so only the cron can trigger it. Nothing else to do.
+**A) GitHub Actions (canonical).** [`.github/workflows/check-dumps.yml`](.github/workflows/check-dumps.yml) hits `/api/internal/check-dumps` every 15 minutes. Vercel's Hobby plan caps crons at once per day, so the schedule lives in Actions instead of `vercel.json`. Add repo **Secret** `CRON_SECRET` (matching the Vercel env var) and **Variable** `PROD_URL` (your production URL) under Settings → Secrets and variables → Actions. Nothing else to do.
 
 **B) Portable worker.** [`cron/dev-wallet-watch.ts`](cron/dev-wallet-watch.ts) does the same work as a standalone Node script, depending only on the shared packages — run it anywhere:
 
@@ -197,7 +197,7 @@ A ready-to-use GitHub Actions schedule lives in [`.github/workflows/dev-wallet-w
 1. Import the repo into [Vercel](https://vercel.com). Set the **Root Directory** to `apps/web`.
 2. Add every server env var from `.env.example` in **Project Settings → Environment Variables** (including `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`).
 3. Set `NEXT_PUBLIC_APP_URL` to your production URL.
-4. Deploy. The cron in `vercel.json` starts running automatically.
+4. Deploy. Then enable the 15-minute dump check by adding the `CRON_SECRET` secret and `PROD_URL` variable to the repo (see [Dev-wallet dump alerts](#dev-wallet-dump-alerts)) — the GitHub Actions schedule drives it, since Hobby-plan Vercel Crons only run once daily.
 
 ### Mobile → EAS
 

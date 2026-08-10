@@ -109,11 +109,8 @@ export function WalletResult({ scan }: { scan: WalletScan }) {
         <Stat label="tokens created" value={scan.createdTokenCount != null ? String(scan.createdTokenCount) : '—'} sub={scan.createdTokenCount ? 'dev wallet' : undefined} />
       </div>
 
-      {/* Metrics: all-time vs 90d */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <MetricsCard title="All-time" metrics={scan.allTime} />
-        <MetricsCard title="Last 90 days" metrics={scan.last90d} />
-      </div>
+      {/* All-time performance (Solana Tracker's tier returns all-time only) */}
+      <MetricsCard title="All-time PnL" metrics={scan.allTime} />
 
       {/* Holdings */}
       <div>
@@ -202,6 +199,20 @@ function HoldingsTable({ holdings }: { holdings: Holding[] }) {
                   {h.symbol ? `$${h.symbol}` : shortenAddress(h.mint, 4, 4)}
                 </div>
                 {h.name && <div className="truncate font-mono text-[10px] text-text-muted">{h.name}</div>}
+                {h.mint && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <a
+                      href={`https://solscan.io/token/${h.mint}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate font-mono text-[10px] text-text-muted hover:text-signal-green hover:underline"
+                      title="View token on Solscan"
+                    >
+                      {shortenAddress(h.mint, 4, 4)}
+                    </a>
+                    <CopyButton value={h.mint} display="" className="opacity-60 hover:opacity-100" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-right font-mono text-xs text-text-secondary">{formatNumber(h.amount)}</div>

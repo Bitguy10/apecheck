@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Nav } from '@/components/Nav';
+import { MobileTabBar } from '@/components/MobileTabBar';
 
 export const metadata: Metadata = {
   title: 'ApeCheck — Scan before you ape',
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <Nav />
         <main className="content-layer mx-auto w-full max-w-3xl px-4 pb-24 pt-4">{children}</main>
+        <MobileTabBar />
       </body>
     </html>
   );

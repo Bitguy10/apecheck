@@ -3,6 +3,11 @@ import { env } from '@/lib/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// A cold /scan can take 20-50s. Without this the function inherits Vercel's 10s
+// default and is killed mid-scan → Telegram never gets a 200 → it retries the
+// update → duplicate "Scanning…" replies + apparent hangs. 60s (Hobby max) lets
+// the handler finish and ack within Telegram's webhook tolerance.
+export const maxDuration = 60;
 
 /**
  * POST /api/telegram/webhook — Telegram update receiver.

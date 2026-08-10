@@ -103,16 +103,9 @@ export async function POST(req: Request) {
       trades: tracker.pnl.trades,
     };
 
-    // A trailing-90-day window is not available on the current tracker tier; the
-    // columns render "—" rather than mislabel all-time numbers as 90-day.
-    const last90d: WalletMetrics = {
-      pnl: { totalUsd: null, realizedUsd: null, unrealizedUsd: null, investedUsd: null, roiPct: null, winRatePct: null, wins: null, losses: null },
-      volumeUsd: null,
-      trades: null,
-    };
-    if (tracker.available) {
-      warnings.push('90-day windowed metrics require a higher Solana Tracker tier; showing all-time figures.');
-    }
+    // Solana Tracker's public tier returns all-time PnL only (no trailing
+    // window), so we surface a single honest All-time card rather than
+    // mislabeling all-time numbers as a 30/90-day window.
 
     const result: WalletScan = {
       walletAddress,
@@ -122,7 +115,6 @@ export async function POST(req: Request) {
       holdings,
       holdingsCount: holdings.length,
       allTime,
-      last90d,
       walletAgeDays,
       createdTokenCount,
       metricsAvailable: tracker.available,
@@ -165,9 +157,8 @@ async function recordWalletHistory(walletAddress: string, scan: WalletScan): Pro
       summary: {
         totalValueUsd: scan.totalValueUsd,
         allTimePnlUsd: scan.allTime.pnl.totalUsd,
-        pnl90dUsd: scan.last90d.pnl.totalUsd,
-        volume90dUsd: scan.last90d.volumeUsd,
-        winRate90dPct: scan.last90d.pnl.winRatePct,
+        volumeUsd: scan.allTime.volumeUsd,
+        winRatePct: scan.allTime.pnl.winRatePct,
         holdingsCount: scan.holdingsCount,
       },
     });

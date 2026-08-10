@@ -19,7 +19,7 @@ const BENEFITS: { icon: string; title: string; body: string }[] = [
   {
     icon: '👛',
     title: 'Deep wallet tracking',
-    body: '90-day windowed PnL, win rate, and trading volume on every wallet you track.',
+    body: 'Windowed PnL, win rate, and trading volume on every wallet you track.',
   },
   {
     icon: '📊',
@@ -107,7 +107,7 @@ export default function ProPage() {
           <CompareRow label="Token risk scans" regular="10 / day" pro="unlimited" />
           <CompareRow label="Wallet scans" regular="5 / day" pro="unlimited" />
           <CompareRow label="Push + Telegram alerts" regular={false} pro />
-          <CompareRow label="90-day wallet PnL & win rate" regular={false} pro />
+          <CompareRow label="Windowed wallet PnL & win rate" regular={false} pro />
           <CompareRow label="Watchlist size" regular="25" pro="500" />
           <CompareRow label="Background refresh" regular="hourly" pro="live" />
         </ul>

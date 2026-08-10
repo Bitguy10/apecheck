@@ -344,7 +344,7 @@ export interface WalletPnl {
   losses: number | null;
 }
 
-/** A window of metrics (e.g. all-time vs trailing 90 days). */
+/** A window of metrics (e.g. all-time performance). */
 export interface WalletMetrics {
   pnl: WalletPnl;
   /** Total buy+sell volume in USD over the window. */
@@ -367,8 +367,6 @@ export interface WalletScan {
   holdingsCount: number;
   /** All-time performance. */
   allTime: WalletMetrics;
-  /** Trailing-90-day performance (matches the tracker table columns). */
-  last90d: WalletMetrics;
   /** Wallet age in days from earliest signature; null if too active to bound. */
   walletAgeDays: number | null;
   /** # of tokens created/deployed by this wallet (dev-wallet signal). */
@@ -389,9 +387,8 @@ export interface WalletScanHistoryItem {
   summary?: {
     totalValueUsd: number | null;
     allTimePnlUsd: number | null;
-    pnl90dUsd: number | null;
-    volume90dUsd: number | null;
-    winRate90dPct: number | null;
+    volumeUsd: number | null;
+    winRatePct: number | null;
     holdingsCount: number | null;
   };
 }

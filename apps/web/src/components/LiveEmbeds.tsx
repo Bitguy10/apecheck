@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ScanResult } from '@apecheck/core';
+import { BubbleMap } from './BubbleMap';
 
 type Tab = 'chart' | 'trades' | 'bubbles';
 
@@ -60,16 +61,16 @@ export function LiveEmbeds({ scan }: { scan: ScanResult }) {
       {tab === 'trades' && tradesUrl && <Frame src={tradesUrl} title="Live trades" />}
       {tab === 'bubbles' && (
         <div>
-          <Frame src={bubbleUrl} title="Bubble map" />
+          <BubbleMap holders={scan.topHolders} />
           <p className="mt-1 text-center font-mono text-[10px] text-text-muted">
-            Bubble map may take a moment to compute.{' '}
+            Holder concentration from this scan.{' '}
             <a
               href={bubbleUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-solana-purple hover:underline"
             >
-              open in Bubblemaps ↗
+              open full transfer graph in Bubblemaps ↗
             </a>
           </p>
         </div>

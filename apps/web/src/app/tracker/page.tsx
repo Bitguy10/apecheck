@@ -180,9 +180,8 @@ function WalletHistoryTable({
             <th className="px-4 py-2.5 text-left font-normal">wallet</th>
             <th className="px-3 py-2.5 text-right font-normal">value</th>
             <th className="px-3 py-2.5 text-right font-normal">all-time pnl</th>
-            <th className="px-3 py-2.5 text-right font-normal">90d pnl</th>
-            <th className="px-3 py-2.5 text-right font-normal">90d volume</th>
-            <th className="px-3 py-2.5 text-right font-normal">90d win</th>
+            <th className="px-3 py-2.5 text-right font-normal">volume</th>
+            <th className="px-3 py-2.5 text-right font-normal">win rate</th>
             <th className="px-4 py-2.5 text-right font-normal">scanned</th>
           </tr>
         </thead>
@@ -203,10 +202,9 @@ function WalletHistoryTable({
                 </td>
                 <td className="px-3 py-3 text-right font-mono text-xs text-text-primary">{usd(s?.totalValueUsd)}</td>
                 <td className={`px-3 py-3 text-right font-mono text-xs ${pnlClass(s?.allTimePnlUsd)}`}>{signedUsd(s?.allTimePnlUsd)}</td>
-                <td className={`px-3 py-3 text-right font-mono text-xs ${pnlClass(s?.pnl90dUsd)}`}>{signedUsd(s?.pnl90dUsd)}</td>
-                <td className="px-3 py-3 text-right font-mono text-xs text-text-secondary">{usd(s?.volume90dUsd)}</td>
+                <td className="px-3 py-3 text-right font-mono text-xs text-text-secondary">{usd(s?.volumeUsd)}</td>
                 <td className="px-3 py-3 text-right font-mono text-xs text-text-secondary">
-                  {s?.winRate90dPct != null ? `${s.winRate90dPct.toFixed(0)}%` : '—'}
+                  {s?.winRatePct != null ? `${s.winRatePct.toFixed(0)}%` : '—'}
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-[10px] text-text-muted">
                   {now > 0 ? timeAgo(it.scannedAt, now) : ''}
@@ -257,9 +255,8 @@ function writeLocalHistory(scan: WalletScan): void {
       summary: {
         totalValueUsd: scan.totalValueUsd,
         allTimePnlUsd: scan.allTime.pnl.totalUsd,
-        pnl90dUsd: scan.last90d.pnl.totalUsd,
-        volume90dUsd: scan.last90d.volumeUsd,
-        winRate90dPct: scan.last90d.pnl.winRatePct,
+        volumeUsd: scan.allTime.volumeUsd,
+        winRatePct: scan.allTime.pnl.winRatePct,
         holdingsCount: scan.holdingsCount,
       },
     };
