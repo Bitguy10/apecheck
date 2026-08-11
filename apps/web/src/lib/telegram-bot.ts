@@ -42,6 +42,7 @@ export interface TgUpdate {
     text?: string;
     chat?: { id: number; username?: string; first_name?: string };
     from?: { username?: string };
+    reply_to_message?: { text?: string };
   };
 }
 
@@ -57,12 +58,18 @@ export async function handleTelegramUpdate(update: TgUpdate): Promise<void> {
   const { cmd, arg } = parseCommand(text);
 
   try {
-    // Bare token address (no slash command) → scan it. Pasting a contract
-    // address is the most natural way to use the bot, so treat it as /scan.
-    // Also catches a valid address embedded in a short message ("scan 8Bq…pump").
+    // Bare address (no slash command) → act on it. Pasting a contract address is
+    // the most natural way to use the bot. If it arrived as a reply to one of our
+    // "send me the address" prompts (force_reply), run the command that prompt was
+    // for — so tapping /dev then pasting shows the dev section, not a full /scan.
+    // Otherwise default to a full /scan (with wallet fallback on NOT_FOUND).
     if (cmd === '') {
       const bareAddress = findAddressInText(text);
-      if (bareAddress) return await onScanCommand(chatIdStr, 'scan', bareAddress);
+      if (bareAddress) {
+        const pending = pendingCommandFromReply(msg?.reply_to_message?.text);
+        if (pending === 'wallet') return await onWalletCommand(chatIdStr, bareAddress);
+        return await onScanCommand(chatIdStr, pending || 'scan', bareAddress);
+      }
       return await onHelp(chatIdStr);
     }
 
@@ -116,6 +123,24 @@ function findAddressInText(text: string): string | null {
     if (isValidSolanaAddress(word)) return normalizeAddress(word);
   }
   return null;
+}
+
+/** Commands whose force_reply prompt can be recovered when the user replies with an address. */
+const REPLYABLE_COMMANDS = new Set([
+  'scan', 'risk', 'market', 'liquidity', 'authorities', 'dev', 'holders', 'honeypot', 'chart', 'trades', 'bubblemap', 'wallet',
+]);
+
+/**
+ * Recover the command from a force_reply prompt the user replied to. Our address
+ * prompts read "…run /dev on it", so the first /command in the prompt text is the
+ * one to run — letting a pasted address continue the section the user asked for
+ * (e.g. /dev) instead of defaulting to a full /scan. Null if none matches.
+ */
+function pendingCommandFromReply(replyText: string | undefined): string | null {
+  if (!replyText) return null;
+  const m = replyText.match(/\/([a-z]+)/i);
+  const cmd = m?.[1]?.toLowerCase();
+  return cmd && REPLYABLE_COMMANDS.has(cmd) ? cmd : null;
 }
 
 /** user_id bound to this chat (linked), or null. */
@@ -198,6 +223,7 @@ async function onScanCommand(chatId: string, cmd: string, arg: string): Promise<
     await sendTelegramMessage(
       chatId,
       `Send me the token’s contract address and I’ll run <b>/${cmd}</b> on it — just paste the address here, or use <code>/${cmd} &lt;address&gt;</code>.`,
+      { reply_markup: { force_reply: true, input_field_placeholder: 'Paste the token address' } },
     );
     return;
   }
@@ -311,6 +337,7 @@ async function onWalletCommand(chatId: string, arg: string): Promise<void> {
     await sendTelegramMessage(
       chatId,
       'Send me a <b>wallet address</b> and I’ll show its holdings, portfolio value & all-time PnL — just paste it here, or use <code>/wallet &lt;address&gt;</code>.',
+      { reply_markup: { force_reply: true, input_field_placeholder: 'Paste the wallet address' } },
     );
     return;
   }

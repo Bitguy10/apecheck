@@ -8,7 +8,11 @@ import { env } from './env';
 const API = (token: string, method: string) => `https://api.telegram.org/bot${token}/${method}`;
 
 /** Send a plain-text message to a chat. No-op if the bot isn't configured. */
-export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
+export async function sendTelegramMessage(
+  chatId: string,
+  text: string,
+  extra?: Record<string, unknown>,
+): Promise<boolean> {
   const token = env.telegramBotToken();
   if (!token) return false;
   try {
@@ -20,6 +24,7 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
         text,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
+        ...extra,
       }),
     });
     return res.ok;
