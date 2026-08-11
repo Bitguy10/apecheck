@@ -5,7 +5,9 @@ import {
   formatSignedPercent,
   formatNumber,
   shortenAddress,
+  timeAgo,
   type ScanResult,
+  type WalletScan,
 } from '@apecheck/core';
 import { escapeHtml } from './telegram';
 
@@ -125,6 +127,67 @@ export function fmtScanCard(scan: ScanResult, appUrl: string): string {
     '',
     `<i>${escapeHtml(scan.potentialDisclaimer)}</i>`,
     fmtLinks(scan, appUrl),
+    '',
+    RISK_DISCLAIMER,
+  ].join('\n');
+}
+
+// ── Wallet scan (mirrors the /tracker WalletResult view) ─────────
+function fmtUsdSigned(v: number | null): string {
+  if (v == null) return '—';
+  const s = formatUsd(Math.abs(v));
+  return v < 0 ? `-${s}` : `+${s}`;
+}
+
+/** Full one-message wallet card — holdings, portfolio value, all-time PnL. */
+export function fmtWalletCard(scan: WalletScan, appUrl: string, nowMs: number): string {
+  const p = scan.allTime.pnl;
+  const pnlDot = p.totalUsd == null ? '⚪' : p.totalUsd >= 0 ? '🟢' : '🔴';
+
+  const stats = [
+    `💰 Portfolio: <b>${scan.totalValueUsd != null ? formatUsd(scan.totalValueUsd) : '—'}</b>`,
+    `◎ SOL: <b>${scan.solBalance != null ? `${formatNumber(scan.solBalance)}` : '—'}</b>` +
+      (scan.solBalance != null && scan.solPriceUsd != null ? ` (${formatUsd(scan.solBalance * scan.solPriceUsd)})` : ''),
+    `🪙 Tokens held: <b>${scan.holdingsCount}</b>`,
+    `⏳ Wallet age: <b>${scan.walletAgeDays != null ? `${scan.walletAgeDays}d` : 'unknown'}</b>`,
+    `🏗️ Tokens created: <b>${scan.createdTokenCount != null ? scan.createdTokenCount : '—'}</b>` +
+      (scan.createdTokenCount ? ' <i>(dev wallet)</i>' : ''),
+  ].join('\n');
+
+  // All-time PnL block — only meaningful when the tracker source returned data.
+  const pnlLines = scan.metricsAvailable
+    ? [
+        `${pnlDot} <b>All-time PnL</b>: ${fmtUsdSigned(p.totalUsd)}` + (p.roiPct != null ? ` (${formatSignedPercent(p.roiPct)} ROI)` : ''),
+        `realized ${fmtUsdSigned(p.realizedUsd)} · unrealized ${fmtUsdSigned(p.unrealizedUsd)}`,
+        `win rate ${p.winRatePct != null ? `${p.winRatePct.toFixed(0)}%` : '—'} · ` +
+          `trades ${scan.allTime.trades != null ? scan.allTime.trades : '—'} · ` +
+          `vol ${scan.allTime.volumeUsd != null ? formatUsd(scan.allTime.volumeUsd) : '—'}`,
+      ].join('\n')
+    : '📊 <b>PnL / win rate / volume</b>: unavailable (tracker source not configured).';
+
+  // Top holdings by value (up to 8), each with a copyable mint.
+  const top = scan.holdings.slice(0, 8).map((h) => {
+    const sym = h.symbol ? `$${escapeHtml(h.symbol)}` : shortenAddress(h.mint, 4, 4);
+    const val = h.valueUsd != null ? ` — ${formatUsd(h.valueUsd)}` : '';
+    return `• ${sym}${val}\n  <code>${h.mint}</code>`;
+  });
+  const holdingsBlock = top.length
+    ? `👜 <b>Top holdings</b>${scan.holdingsCount > top.length ? ` (showing ${top.length} of ${scan.holdingsCount})` : ''}\n${top.join('\n')}`
+    : '👜 <b>Holdings</b>: none found in this wallet.';
+
+  const dataNotes = scan.warnings.length ? `\n\n⚠️ <i>${escapeHtml(scan.warnings.join(' '))}</i>` : '';
+
+  return [
+    `👛 <b>Wallet</b> <code>${shortenAddress(scan.walletAddress, 6, 6)}</code> · <i>${timeAgo(scan.scannedAt, nowMs)}</i>`,
+    '',
+    stats,
+    '',
+    pnlLines,
+    '',
+    holdingsBlock,
+    dataNotes,
+    '',
+    `<a href="${appUrl.replace(/\/$/, '')}/tracker">🦍 Open the wallet tracker in ApeCheck</a>`,
     '',
     RISK_DISCLAIMER,
   ].join('\n');

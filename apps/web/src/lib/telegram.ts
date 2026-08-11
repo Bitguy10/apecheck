@@ -126,6 +126,7 @@ export const BOT_COMMANDS: { command: string; description: string }[] = [
   { command: 'chart', description: 'Live chart link' },
   { command: 'trades', description: 'Live trade feed link' },
   { command: 'bubblemap', description: 'Holder bubble map link' },
+  { command: 'wallet', description: 'Scan any wallet — holdings, value & PnL' },
   { command: 'watch', description: 'Add a token to your alert watchlist' },
   { command: 'unwatch', description: 'Remove a token from your watchlist' },
   { command: 'watchlist', description: 'Show your watched tokens' },

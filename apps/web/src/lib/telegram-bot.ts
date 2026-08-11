@@ -11,6 +11,7 @@ import {
 import { createSolanaRpc } from '@apecheck/api-clients';
 import { getAdminSupabase } from './supabase-server';
 import { createSupabaseScanCache, rowToScanResult } from './scan-cache';
+import { runWalletScan, walletHasActivity } from './wallet-scan';
 import { scanConfig, env } from './env';
 import { sendTelegramMessage, sendChatAction, escapeHtml } from './telegram';
 import {
@@ -23,6 +24,7 @@ import {
   fmtHolders,
   fmtHoneypot,
   fmtLinks,
+  fmtWalletCard,
   chartUrl,
   tradesUrl,
   bubbleUrl,
@@ -81,6 +83,8 @@ export async function handleTelegramUpdate(update: TgUpdate): Promise<void> {
       case 'trades':
       case 'bubblemap':
         return await onScanCommand(chatIdStr, cmd, arg);
+      case 'wallet':
+        return await onWalletCommand(chatIdStr, arg);
       case 'watch':
         return await onWatch(chatIdStr, arg);
       case 'unwatch':
@@ -160,7 +164,7 @@ async function onStart(chatId: string, code: string, username: string | null): P
     await sendTelegramMessage(
       chatId,
       'Welcome to <b>ApeCheck</b> 🦍\n\n' +
-        'Paste any Solana token address (or use <code>/scan &lt;address&gt;</code>) and I’ll return a full rug-risk report — <b>no account needed</b>.\n\n' +
+        'Paste any Solana <b>token</b> address (or <code>/scan &lt;address&gt;</code>) for a full rug-risk report, or any <b>wallet</b> address (or <code>/wallet &lt;address&gt;</code>) for its holdings & all-time PnL — <b>no account needed</b>.\n\n' +
         `For <b>alerts</b> when a watched token rugs, connect your account at <a href="${url}/alerts">${shown}/alerts</a> → “Connect Telegram”. Send /help for all commands.`,
     );
     return;
@@ -177,6 +181,8 @@ async function onHelp(chatId: string): Promise<void> {
       '<b>Scan a token</b> — just paste its Solana address, or add it after a command (<b>no account needed</b>):\n' +
       '/scan · /risk · /market · /liquidity · /authorities · /dev · /holders · /honeypot\n' +
       '/chart · /trades · /bubblemap — live links\n\n' +
+      '<b>Scan a wallet</b> — holdings, portfolio value & all-time PnL (<b>no account needed</b>):\n' +
+      '/wallet &lt;address&gt; — or just paste any wallet address\n\n' +
       `<b>Alerts</b> (connect your account first): <a href="${url}/">${shown}/</a>\n` +
       '/watch &lt;address&gt; · /unwatch &lt;address&gt; · /watchlist · /alerts\n\n' +
       `Connect your account in the app (<a href="${url}/">${shown}/</a>) → Alerts → “Connect Telegram”, then you’ll get a /start link.\n\n` +
@@ -198,12 +204,21 @@ async function onScanCommand(chatId: string, cmd: string, arg: string): Promise<
 
   // Immediate feedback — a cold scan can take 20-50s, so never leave the user staring.
   await sendChatAction(chatId, 'typing');
-  await sendTelegramMessage(chatId, `🔍 Scanning <code>${shortenAddress(address, 6, 6)}</code>… (up to ~30s on a cold token)`);
+  await sendTelegramMessage(chatId, `🔍 Scanning <code>${shortenAddress(address, 6, 6)}</code>… (up to ~30s)`);
 
   let scan: ScanResult;
   try {
     scan = await scanToken(address);
   } catch (err) {
+    // Not a token? It may be a plain wallet. Every scan-family command falls back
+    // to a wallet scan on NOT_FOUND, so pasting a dev/holder/any wallet "just works"
+    // — for bot-only users who never link an account, that's the common case.
+    if (err instanceof ScanError && err.code === 'NOT_FOUND') {
+      const shown = await tryWalletScan(chatId, address);
+      if (shown) return;
+      await sendTelegramMessage(chatId, notFoundText(address));
+      return;
+    }
     await sendTelegramMessage(chatId, scanErrorText(err));
     return;
   }
@@ -268,6 +283,55 @@ function scanErrorText(err: unknown): string {
     }
   }
   return '⚠️ Scan failed. Try again in a moment.';
+}
+
+// ── /wallet (+ auto-fallback from a failed token scan) ───────
+/**
+ * Scan a plain wallet: holdings, portfolio value, all-time PnL. Works with no
+ * linked account. Returns true if a wallet card was sent, false if the address
+ * shows no on-chain activity — so callers can show a proper not-found message
+ * instead of an empty "wallet" card for a mistyped/nonexistent address.
+ */
+async function tryWalletScan(chatId: string, address: string): Promise<boolean> {
+  try {
+    const nowMs = Date.now();
+    const scan = await runWalletScan(address, nowMs);
+    if (!walletHasActivity(scan)) return false;
+    await sendTelegramMessage(chatId, fmtWalletCard(scan, env.appUrl(), nowMs));
+    return true;
+  } catch (err) {
+    console.error('[tg-bot] wallet scan error', err);
+    return false;
+  }
+}
+
+async function onWalletCommand(chatId: string, arg: string): Promise<void> {
+  const address = arg && isValidSolanaAddress(arg) ? normalizeAddress(arg) : null;
+  if (!address) {
+    await sendTelegramMessage(
+      chatId,
+      'Send me a <b>wallet address</b> and I’ll show its holdings, portfolio value & all-time PnL — just paste it here, or use <code>/wallet &lt;address&gt;</code>.',
+    );
+    return;
+  }
+
+  await sendChatAction(chatId, 'typing');
+  await sendTelegramMessage(chatId, `👛 Scanning wallet <code>${shortenAddress(address, 6, 6)}</code>…`);
+
+  const shown = await tryWalletScan(chatId, address);
+  if (!shown) {
+    await sendTelegramMessage(
+      chatId,
+      `🔍 No on-chain activity found for <code>${shortenAddress(address, 6, 6)}</code>. Double-check the address — it should be a Solana wallet or token.`,
+    );
+  }
+}
+
+function notFoundText(address: string): string {
+  return (
+    `🔍 Couldn’t find a <b>token</b> or any <b>wallet</b> activity for <code>${shortenAddress(address, 6, 6)}</code>.\n\n` +
+    'Paste a token’s contract address to scan it, or a wallet address to see its holdings & PnL.'
+  );
 }
 
 // ── watchlist-scoped commands (require a linked account) ─────
