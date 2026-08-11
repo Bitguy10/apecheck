@@ -7,7 +7,14 @@ import {
 } from '@apecheck/api-clients';
 import { env } from './env';
 
-const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const SOL_MINT = 'So11111111111111111111111111111111111111112'; // wrapped SOL (for the price lookup)
+// SOL as it can appear inside a wallet's token list — wrapped SOL and Solana
+// Tracker's native-SOL pseudo-mint. These are filtered out of holdings so SOL is
+// counted exactly once (we track it via the authoritative RPC SOL balance).
+const SOL_MINTS = new Set([
+  'So11111111111111111111111111111111111111112',
+  'So11111111111111111111111111111111111111111',
+]);
 
 /**
  * Core wallet-scan assembly, shared by the API route (POST /api/wallet-scan)
@@ -46,8 +53,12 @@ export async function runWalletScan(walletAddress: string, nowMs: number): Promi
 
   // Prefer tracker holdings (they carry live USD value); fall back to raw RPC
   // balances when the tracker is unavailable so the list is never empty.
+  // Native SOL is dropped from the token list here — the tracker reports it as a
+  // pseudo-holding, but we surface SOL separately (solBalance, from RPC) and add
+  // its value to the portfolio once below. Leaving it in double-counted SOL in
+  // the total and listed it twice in the UI.
   const holdings: Holding[] = tracker.available && tracker.holdings.length
-    ? tracker.holdings.map(fromTrackerHolding)
+    ? tracker.holdings.filter((t) => !SOL_MINTS.has(t.mint)).map(fromTrackerHolding)
     : (rpcAccounts || []).map((a) => ({
         mint: a.mint,
         name: null,
@@ -62,12 +73,13 @@ export async function runWalletScan(walletAddress: string, nowMs: number): Promi
     warnings.push('Token USD values are unavailable without the tracker source; showing raw balances.');
   }
 
+  // Portfolio value = priced (non-SOL) holdings + native SOL, counted once. When
+  // the tracker is unavailable we have no token prices, so the token side is
+  // unknown (null) and only the SOL value contributes.
   const solValueUsd = solBalance != null && solPriceUsd != null ? solBalance * solPriceUsd : null;
   const holdingsValueUsd = tracker.available
-    ? tracker.totalValueUsd
-    : holdings.every((h) => h.valueUsd == null)
-      ? null
-      : holdings.reduce((sum, h) => sum + (h.valueUsd ?? 0), 0);
+    ? holdings.reduce((sum, h) => sum + (h.valueUsd ?? 0), 0)
+    : null;
   const totalValueUsd =
     holdingsValueUsd == null && solValueUsd == null ? null : (holdingsValueUsd ?? 0) + (solValueUsd ?? 0);
 
